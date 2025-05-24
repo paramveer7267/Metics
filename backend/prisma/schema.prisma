@@ -1,0 +1,419 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Change to "postgresql" or "mysql" if needed
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  SELLER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  password    String
+  phone       String?   @unique
+  gender      String? // Optional: "Male", "Female", "Other"
+  dateOfBirth DateTime?
+  role        Role      @default(CUSTOMER)
+  isVerified  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+  Product   Product[]
+
+  @@map("users")
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  country   String
+  zipCode   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+  reviews    Review[]
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  status    OrderStatus @default(PENDING)
+  total     Float
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        Int   @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Float
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  userId    String
+  rating    Int // e.g. 1 to 5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+
+
+// Prisma Schema Syntax Basics
+// model ModelName { ... } — Defines a table/entity in your database.
+
+// fieldName Type — Defines a column/field.
+
+// @id — Marks this field as the primary key.
+
+// @default(value) — Sets a default value.
+
+// @unique — Marks the field unique.
+
+// @relation(fields: [...], references: [...]) — Defines a foreign key relationship.
+
+// enum EnumName { ... } — Defines an enumeration.
+
+// @map("db_table_name") — Maps model/table or field names to actual database names.
+
+// Scalar types: String, Int, Float, Boolean, DateTime.
+
+// Models Explained
+// 1. User
+// prisma
+// Copy
+// Edit
+// model User {
+//   id          String    @id @default(uuid())
+//   name        String
+//   email       String    @unique
+//   password    String
+//   phone       String?   @unique
+//   gender      String?   // Optional: "Male", "Female", "Other"
+//   dateOfBirth DateTime?
+//   role        Role      @default(CUSTOMER)
+//   isVerified  Boolean   @default(false)
+//   createdAt   DateTime  @default(now())
+//   updatedAt   DateTime  @updatedAt
+
+//   addresses   Address[]
+//   orders      Order[]
+//   reviews     Review[]
+
+//   @@map("users")
+// }
+// id: Primary key, UUID string automatically generated.
+
+// name, email, password: Basic user info.
+
+// email: Unique, no duplicates allowed.
+
+// phone: Optional unique phone number.
+
+// gender, dateOfBirth: Optional fields.
+
+// role: Enum Role (CUSTOMER, ADMIN, SELLER), default CUSTOMER.
+
+// isVerified: Whether user verified email.
+
+// createdAt: Timestamp when created, defaults to now.
+
+// updatedAt: Timestamp auto-updated on record update.
+
+// Relations:
+
+// addresses: One user has many addresses.
+
+// orders: One user has many orders.
+
+// reviews: One user writes many reviews.
+
+// @@map("users"): Maps model name User to database table users.
+
+// 2. Address
+// prisma
+// Copy
+// Edit
+// model Address {
+//   id        String   @id @default(uuid())
+//   userId    String
+//   user      User     @relation(fields: [userId], references: [id])
+//   line1     String
+//   line2     String?
+//   city      String
+//   state     String
+//   country   String
+//   zipCode   String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("addresses")
+// }
+// id: Primary key UUID.
+
+// userId: Foreign key linking to User.
+
+// user: Relation to the User model, references User.id.
+
+// Address fields: line1, line2 (optional), city, state, country, zipCode.
+
+// Created and updated timestamps.
+
+// Maps to table addresses.
+
+// 3. Role (Enum)
+// prisma
+// Copy
+// Edit
+// enum Role {
+//   CUSTOMER
+//   ADMIN
+//   SELLER
+// }
+// Enum listing possible user roles.
+
+// Used in User model for role field.
+
+// 4. Category
+// prisma
+// Copy
+// Edit
+// model Category {
+//   id        Int       @id @default(autoincrement())
+//   name      String    @unique
+//   products  Product[]
+// }
+// id: Primary key auto-incrementing integer.
+
+// name: Unique category name.
+
+// products: One category has many products.
+
+// 5. Product
+// prisma
+// Copy
+// Edit
+// model Product {
+//   id          Int       @id @default(autoincrement())
+//   name        String
+//   description String?
+//   price       Float
+//   stock       Int       @default(0)
+//   categoryId  Int
+//   category    Category  @relation(fields: [categoryId], references: [id])
+//   sellerId    String
+//   seller      User      @relation(fields: [sellerId], references: [id])
+//   createdAt   DateTime  @default(now())
+//   updatedAt   DateTime  @updatedAt
+
+//   orderItems  OrderItem[]
+//   reviews     Review[]
+// }
+// id: Auto-incrementing int primary key.
+
+// name: Product name.
+
+// description: Optional product description.
+
+// price: Product price as float.
+
+// stock: Quantity available, default 0.
+
+// categoryId: Foreign key to Category.
+
+// category: Relation to Category model.
+
+// sellerId: Foreign key to User (seller).
+
+// seller: Relation to User model.
+
+// Created/updated timestamps.
+
+// Relations:
+
+// orderItems: List of order items containing this product.
+
+// reviews: List of reviews on the product.
+
+// 6. OrderStatus (Enum)
+// prisma
+// Copy
+// Edit
+// enum OrderStatus {
+//   PENDING
+//   PROCESSING
+//   SHIPPED
+//   DELIVERED
+//   CANCELLED
+// }
+// Enum for order status lifecycle.
+
+// 7. Order
+// prisma
+// Copy
+// Edit
+// model Order {
+//   id          Int         @id @default(autoincrement())
+//   userId      String
+//   user        User        @relation(fields: [userId], references: [id])
+//   status      OrderStatus @default(PENDING)
+//   total       Float
+//   createdAt   DateTime    @default(now())
+//   updatedAt   DateTime    @updatedAt
+
+//   orderItems  OrderItem[]
+// }
+// id: Auto-increment int primary key.
+
+// userId: FK to User.
+
+// user: Relation to User.
+
+// status: Enum with default PENDING.
+
+// total: Total order price.
+
+// Created/updated timestamps.
+
+// orderItems: List of products in this order.
+
+// 8. OrderItem
+// prisma
+// Copy
+// Edit
+// model OrderItem {
+//   id          Int      @id @default(autoincrement())
+//   orderId     Int
+//   productId   Int
+//   quantity    Int
+//   price       Float
+
+//   order       Order    @relation(fields: [orderId], references: [id])
+//   product     Product  @relation(fields: [productId], references: [id])
+// }
+// id: Auto-increment int PK.
+
+// orderId: FK to Order.
+
+// productId: FK to Product.
+
+// quantity: How many units ordered.
+
+// price: Price per unit at time of order.
+
+// Relations to Order and Product.
+
+// 9. Review
+// prisma
+// Copy
+// Edit
+// model Review {
+//   id          Int       @id @default(autoincrement())
+//   productId   Int
+//   userId      String
+//   rating      Int       // e.g. 1 to 5
+//   comment     String?
+//   createdAt   DateTime  @default(now())
+
+//   product     Product   @relation(fields: [productId], references: [id])
+//   user        User      @relation(fields: [userId], references: [id])
+// }
+// id: Auto-increment PK.
+
+// productId: FK to Product.
+
+// userId: FK to User.
+
+// rating: Rating number.
+
+// comment: Optional text comment.
+
+// Created timestamp.
+
+// Relations to Product and User.
+
+// Summary
+// Models define database tables.
+
+// Scalar types define column types.
+
+// @id marks primary key.
+
+// @relation defines foreign keys and relations.
+
+// Enums define fixed sets of values.
+
+// Timestamps with @default(now()) and @updatedAt for creation/update times.
+
+// @map to specify exact DB table names.
+
+// Relations (one-to-many, many-to-one) expressed by FK fields + relation attributes.
+
+// If you want, I can also help you write example Prisma queries to create/read/update these models! Would that help?
+
+
+
+
+
+
+
+
