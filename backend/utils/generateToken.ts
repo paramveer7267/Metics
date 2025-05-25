@@ -4,11 +4,11 @@ import { envVars } from "../config/envVars.js"; // Ensure this file has proper T
 
 export const generateTokenAndSetCookie = (
   userId: string,
-  // role: string,
+  role: string,
   res: Response
 ): string => {
   const token = jwt.sign(
-    { userId },
+    { userId,role },
     envVars.JWT_SECRET as string,
     { expiresIn: "15d" }
   );
