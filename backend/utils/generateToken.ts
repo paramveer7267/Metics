@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { Response } from "express";
-import { envVars } from "../config/envVars.js"; // Ensure this file has proper TypeScript typing too
+import { envVars } from "../config/envVars.ts"; // Ensure this file has proper TypeScript typing too
 
 export const generateTokenAndSetCookie = (
   userId: string,
