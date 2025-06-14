@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql" // Change to "postgresql" or "mysql" if needed
-  url      = env("PGURL")
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
