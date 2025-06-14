@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 // Sign-up controller
 export const userSignup = async (req: Request, res: Response): Promise<any> => {
   try {
-
     const { name, email, password, role} =
       req.body;
     if (!email || !password || !name) {
@@ -44,7 +43,7 @@ export const userSignup = async (req: Request, res: Response): Promise<any> => {
     }
 
     // Check if the email already exists in the database
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existingUser) {
       return res
         .status(400)
@@ -80,10 +79,12 @@ export const userSignup = async (req: Request, res: Response): Promise<any> => {
         role: newUser.role,
       },
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+  } catch (err: any) {
+  if (err.code === 'P2002') {
+    return res.status(400).json({ message: "Email already exists." });
   }
+  res.status(500).json({ message: "Server error", details: err.message });
+}
 };
 
 // Login controller
@@ -144,3 +145,34 @@ export async function userLogin(req: Request, res: Response): Promise<any> {
     });
   }
 }
+
+// Logout controller
+export async function userLogout(req: Request, res: Response): Promise<any> {
+  try {
+    // Clear the cookie
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV !== "development",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+}
+// Note: Ensure that you have proper error handling and logging in place for production use.
+// Also, consider using environment variables for sensitive information like JWT secret and database connection strings.
+// Make sure to test the endpoints thoroughly and handle edge cases.
+// You may also want to implement rate limiting and other security measures to protect your API endpoints.
+// This code is a basic implementation of user authentication using Prisma, bcrypt, and JWT.
+// You can extend it further by adding features like email verification, password reset, etc.
+// Additionally, consider implementing role-based access control (RBAC) if your application requires different permissions for different user roles.
+   
